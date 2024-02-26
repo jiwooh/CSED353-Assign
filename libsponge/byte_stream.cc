@@ -12,11 +12,10 @@ void DUMMY_CODE(Targs &&... /* unused */) {}
 
 using namespace std;
 
-size_t min(const size_t a, const size_t b) {
-    return a > b ? b : a;
-}
+size_t min(const size_t a, const size_t b) { return a > b ? b : a; }
 
-ByteStream::ByteStream(const size_t capacity): _stream(), _capacity(capacity), _currentSize(0), _endInput(false), _totalReadBytes(0), _totalWriteBytes(0) {}
+ByteStream::ByteStream(const size_t capacity)
+    : _stream(), _capacity(capacity), _currentSize(0), _endInput(false), _totalReadBytes(0), _totalWriteBytes(0) {}
 
 size_t ByteStream::write(const string &data) {
     size_t writeSize = min(data.size(), remaining_capacity());
@@ -64,30 +63,16 @@ void ByteStream::end_input() {
     return;
 }
 
-bool ByteStream::input_ended() const {
-    return _endInput;
-}
+bool ByteStream::input_ended() const { return _endInput; }
 
-size_t ByteStream::buffer_size() const {
-    return _currentSize;
-}
+size_t ByteStream::buffer_size() const { return _currentSize; }
 
-bool ByteStream::buffer_empty() const {
-    return ByteStream::buffer_size() == 0;
-}
+bool ByteStream::buffer_empty() const { return ByteStream::buffer_size() == 0; }
 
-bool ByteStream::eof() const {
-    return !_currentSize && input_ended();
-}
+bool ByteStream::eof() const { return !_currentSize && input_ended(); }
 
-size_t ByteStream::bytes_written() const {
-    return _totalWriteBytes;
-}
+size_t ByteStream::bytes_written() const { return _totalWriteBytes; }
 
-size_t ByteStream::bytes_read() const {
-    return _totalReadBytes;
-}
+size_t ByteStream::bytes_read() const { return _totalReadBytes; }
 
-size_t ByteStream::remaining_capacity() const {
-    return _capacity - _currentSize;
-}
+size_t ByteStream::remaining_capacity() const { return _capacity - _currentSize; }
