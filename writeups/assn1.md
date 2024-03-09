@@ -7,7 +7,7 @@ My POVIS ID: [your povis id here]
 
 My student ID (numeric): [your student id here]
 
-This assignment took me about [n] hours to do (including the time on studying, designing, and writing the code).
+This assignment took me about 12 hours to do (including the time on studying, designing, and writing the code).
 
 Program Structure and Design of the StreamReassembler:
 []
