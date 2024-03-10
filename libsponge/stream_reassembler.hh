@@ -4,8 +4,8 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
-#include <string>
 #include <map>
+#include <string>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -16,12 +16,12 @@ class StreamReassembler {
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
 
-    std::map<size_t, std::string> _waiting; // ** LIST FOR WAITING SUBSTRINGS {index, str}
-    size_t _nextIndex = 0; // ** INDEX OF LAST-ASSEMBLED SUBSTRING
+    std::map<size_t, std::string> _waiting;  // ** LIST FOR WAITING SUBSTRINGS {index, str}
+    size_t _nextIndex = 0;                   // ** INDEX OF LAST-ASSEMBLED SUBSTRING
     size_t _waitingBytes = 0;
     bool _eofFlag = false;
     size_t _eofIndex = 0;
-    
+
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
     //! \note This capacity limits both the bytes that have been reassembled,
