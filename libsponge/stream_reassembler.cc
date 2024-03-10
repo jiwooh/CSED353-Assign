@@ -1,7 +1,5 @@
 #include "stream_reassembler.hh"
 
-#include <iostream>  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 // Dummy implementation of a stream reassembler.
 
 // For Lab 1, please replace with a real implementation that passes the
@@ -67,7 +65,7 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
         }
     }
 
-    // and insert or merge the new data
+    // and insert the new data
     _waiting[startIndex] = trimData;
     _waitingBytes += trimData.size();
 

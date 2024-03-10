@@ -16,11 +16,11 @@ class StreamReassembler {
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
 
-    std::map<size_t, std::string> _waiting;  // ** LIST FOR WAITING SUBSTRINGS {index, str}
-    size_t _nextIndex = 0;                   // ** INDEX OF LAST-ASSEMBLED SUBSTRING
-    size_t _waitingBytes = 0;
-    bool _eofFlag = false;
-    size_t _eofIndex = 0;
+    std::map<size_t, std::string> _waiting;  // ** list for waiting substrings
+    size_t _nextIndex = 0;                   // ** index of next contiguous substring to be joined
+    size_t _waitingBytes = 0;                // ** amount of waiting bytes of substrings
+    bool _eofFlag = false;                   // ** whether input has flagged eof
+    size_t _eofIndex = 0;                    // ** index where the string should end
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
