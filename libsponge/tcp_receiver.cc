@@ -15,28 +15,31 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
 
     // on first SYN
     if (header.syn && !_recievedSYN) {
-        _recievedSYN = true; // set SYN flag
-        _isn = header.seqno; // set ISN
+        _recievedSYN = true;  // set SYN flag
+        _isn = header.seqno;  // set ISN
     }
-    if (!_recievedSYN) { // do not start recieving before SYN
+    if (!_recievedSYN) {  // do not start recieving before SYN
         return;
     }
-    if (header.fin) { // set FIN flag
+    if (header.fin) {  // set FIN flag
         _recievedFIN = true;
     }
-    
+
     // push str into reassembler
     size_t absSeqno = unwrap(header.seqno + header.syn, _isn, _reassembler.stream_out().bytes_written());
-    _reassembler.push_substring(seg.payload().copy(), absSeqno - 1, header.fin); // -1 to make index
+    _reassembler.push_substring(seg.payload().copy(), absSeqno - 1, header.fin);  // -1 to make index
 
     return;
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const {
-    if (!_recievedSYN) return {};
-    size_t flagBits = 0; // SYN and FIN flags also occupy bits
-    if (_recievedSYN) flagBits++;
-    if (_recievedFIN && _reassembler.empty()) flagBits++;
+    if (!_recievedSYN)
+        return {};
+    size_t flagBits = 0;  // SYN and FIN flags also occupy bits
+    if (_recievedSYN)
+        flagBits++;
+    if (_recievedFIN && _reassembler.empty())
+        flagBits++;
     return wrap(flagBits + _reassembler.stream_out().bytes_written(), _isn);
 }
 

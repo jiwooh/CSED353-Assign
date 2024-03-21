@@ -4,8 +4,8 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
-#include <string>
 #include <deque>
+#include <string>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -17,7 +17,7 @@ class StreamReassembler {
     size_t _capacity;    //!< The maximum number of bytes
     size_t _waitingSize = 0;
     bool _eofFlag = false;
-    
+
     std::deque<char> _buffer;
     std::deque<bool> _bufferCheck;
 
