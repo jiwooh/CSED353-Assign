@@ -2,8 +2,8 @@
 
 #include "tcp_config.hh"
 
-#include <random>
 #include <iostream>
+#include <random>
 
 // Dummy implementation of a TCP sender
 
@@ -35,25 +35,27 @@ void TCPSender::fill_window() {
         _SYN = true;
         return;
     }
-    _windowZero = _windowSize ? false : true; // need to save isZero information because we are seeing windowsize 0 as 1 below
+    _windowZero =
+        _windowSize ? false : true;  // need to save isZero information because we are seeing windowsize 0 as 1 below
 
     // send segments while window is not full and FIN is not sent yet
-    size_t fWindowSize = _windowSize > 0 ? _windowSize : 1; // see _windowSize 0 as 1
-    while (!_FIN) { // no FIN sent yet
+    size_t fWindowSize = _windowSize > 0 ? _windowSize : 1;  // see _windowSize 0 as 1
+    while (!_FIN) {                                          // no FIN sent yet
         size_t remainingWindow = fWindowSize - (_next_seqno - _receievedAckno);
-        if (!remainingWindow) { // stop sending if window is full
+        if (!remainingWindow) {  // stop sending if window is full
             return;
         }
 
         TCPSegment seg;
         size_t amount = min(remainingWindow, TCPConfig::MAX_PAYLOAD_SIZE);
-        seg.payload() = Buffer(_stream.read(amount)); // payload() has type Buffer
-        
-        if (_stream.eof() && seg.length_in_sequence_space() < fWindowSize) { // raise FIN if eof and window is wide enough to send FIN
+        seg.payload() = Buffer(_stream.read(amount));  // payload() has type Buffer
+
+        if (_stream.eof() &&
+            seg.length_in_sequence_space() < fWindowSize) {  // raise FIN if eof and window is wide enough to send FIN
             seg.header().fin = true;
             _FIN = true;
         }
-        if (seg.length_in_sequence_space() == 0) { // empty stream, stop sending
+        if (seg.length_in_sequence_space() == 0) {  // empty stream, stop sending
             break;
         }
         send_segment(seg);
@@ -63,20 +65,21 @@ void TCPSender::fill_window() {
 
 //! \param ackno The remote receiver's ackno (acknowledgment number)
 //! \param window_size The remote receiver's advertised window size
-void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) { 
+void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     size_t absAckno = unwrap(ackno, _isn, _receievedAckno);
-    if (absAckno > _next_seqno) { // invalid ackno recieved
+    if (absAckno > _next_seqno) {  // invalid ackno recieved
         return;
     }
     _windowSize = window_size;
-    if (absAckno <= _receievedAckno) { // absAckno is already ack'd
+    if (absAckno <= _receievedAckno) {  // absAckno is already ack'd
         return;
     }
     _receievedAckno = absAckno;
 
-    while (_sendingSegments.size()) { // outstanding segments exist
+    while (_sendingSegments.size()) {  // outstanding segments exist
         TCPSegment seg = _sendingSegments.front();
-        if (unwrap(seg.header().seqno, _isn, _next_seqno) + seg.length_in_sequence_space() <= absAckno) { // this seg is ack'd already
+        if (unwrap(seg.header().seqno, _isn, _next_seqno) + seg.length_in_sequence_space() <=
+            absAckno) {  // this seg is ack'd already
             _bytesInFlight -= seg.length_in_sequence_space();
             _sendingSegments.pop();
         } else {
@@ -85,29 +88,29 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     }
 
     fill_window();
-    _retxTimeout = _initial_retransmission_timeout; // [3.1 7.a] reset RTO on receiving ack
-    if (_sendingSegments.size()) { // [3.1 7.b] restart timer on existing outstanding data
+    _retxTimeout = _initial_retransmission_timeout;  // [3.1 7.a] reset RTO on receiving ack
+    if (_sendingSegments.size()) {                   // [3.1 7.b] restart timer on existing outstanding data
         _timer = 0;
         _isTimerRunning = true;
     }
-    _consecRetx = 0; // [3.1 7.c] reset consecutive retx
+    _consecRetx = 0;  // [3.1 7.c] reset consecutive retx
     return;
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
-void TCPSender::tick(const size_t ms_since_last_tick) { 
-    _timer += ms_since_last_tick; // [3.1 1.]
-    if (_timer >= _retxTimeout && _sendingSegments.size()) { // [3.1 3.] RTO elapsed, timer expires
-        _segments_out.push(_sendingSegments.front()); // [3.1 6.a] retransmit!
+void TCPSender::tick(const size_t ms_since_last_tick) {
+    _timer += ms_since_last_tick;                             // [3.1 1.]
+    if (_timer >= _retxTimeout && _sendingSegments.size()) {  // [3.1 3.] RTO elapsed, timer expires
+        _segments_out.push(_sendingSegments.front());         // [3.1 6.a] retransmit!
         _consecRetx++;
-        if (!_windowZero) { // [3.1 6.b] "exponential backoff"
+        if (!_windowZero) {  // [3.1 6.b] "exponential backoff"
             _retxTimeout *= 2;
         }
         // [3.1 6.c]
         _timer = 0;
         _isTimerRunning = true;
     }
-    if (_sendingSegments.empty()) { // [3.1 5.] stop timer when all outstanding segs are ack'd
+    if (_sendingSegments.empty()) {  // [3.1 5.] stop timer when all outstanding segs are ack'd
         _isTimerRunning = false;
     }
     return;
@@ -115,7 +118,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
 
 unsigned int TCPSender::consecutive_retransmissions() const { return _consecRetx; }
 
-void TCPSender::send_empty_segment() { // no tracking needed
+void TCPSender::send_empty_segment() {  // no tracking needed
     TCPSegment seg;
     seg.header().seqno = wrap(_next_seqno, _isn);
     _segments_out.push(seg);
@@ -126,10 +129,10 @@ void TCPSender::send_segment(TCPSegment &seg) {
     seg.header().seqno = wrap(_next_seqno, _isn);
     _next_seqno += seg.length_in_sequence_space();
     _bytesInFlight += seg.length_in_sequence_space();
-    _sendingSegments.push(seg); // backup
-    _segments_out.push(seg); // actually send segment
+    _sendingSegments.push(seg);  // backup
+    _segments_out.push(seg);     // actually send segment
 
-    if (!_isTimerRunning) { // [3.1 4.] start timer after sending segment
+    if (!_isTimerRunning) {  // [3.1 4.] start timer after sending segment
         _isTimerRunning = true;
         _timer = 0;
     }
