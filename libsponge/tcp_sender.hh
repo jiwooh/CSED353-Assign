@@ -24,13 +24,27 @@ class TCPSender {
     std::queue<TCPSegment> _segments_out{};
 
     //! retransmission timer for the connection
-    unsigned int _initial_retransmission_timeout;
+    unsigned int _initial_retransmission_timeout; // [3.1 2.]
 
     //! outgoing stream of bytes that have not yet been sent
     ByteStream _stream;
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    std::queue<TCPSegment> _sendingSegments{}; // outstanding segments
+
+    bool _SYN = false;
+    bool _FIN = false;
+    uint16_t _windowSize = 0;
+    bool _windowZero = false;
+    uint64_t _bytesInFlight = 0;
+    size_t _receievedAckno = 0;
+
+    size_t _timer = 0;
+    bool _isTimerRunning = false;
+    unsigned int _consecRetx = 0;
+    uint64_t _retxTimeout = 0;
 
   public:
     //! Initialize a TCPSender
@@ -52,6 +66,9 @@ class TCPSender {
 
     //! \brief Generate an empty-payload segment (useful for creating empty ACK segments)
     void send_empty_segment();
+
+    // Send the segment
+    void send_segment(TCPSegment &seg);
 
     //! \brief create and send segments to fill as much of the window as possible
     void fill_window();
