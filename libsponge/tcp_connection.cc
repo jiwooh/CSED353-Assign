@@ -21,19 +21,20 @@ size_t TCPConnection::unassembled_bytes() const { return _receiver.unassembled_b
 size_t TCPConnection::time_since_last_segment_received() const { return _timeSinceLastSegRecv; }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
-    _timeSinceLastSegRecv = 0; // reset timer
-    
+    _timeSinceLastSegRecv = 0;  // reset timer
+
     // 1. if RST set, set error on streams and kill connection => unclean shutdown
     if (seg.header().rst) {
         uncleanShutdown();
     }
 
     // do not receive when closed
-    if (!active()) return;
+    if (!active())
+        return;
 
     // 2. respond to keep-alive segment, ONLY send empty segment (= returns)
-    if (_receiver.ackno().has_value() && !seg.length_in_sequence_space()
-        && (seg.header().seqno == _receiver.ackno().value() - 1)) {
+    if (_receiver.ackno().has_value() && !seg.length_in_sequence_space() &&
+        (seg.header().seqno == _receiver.ackno().value() - 1)) {
         _sender.send_empty_segment();
         sendSegment();
         return;
@@ -68,7 +69,8 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
 }
 
 bool TCPConnection::active() const {
-    if (_RST) return false;
+    if (_RST)
+        return false;
     // shutdown options prerequisites
     bool prereq1 = _receiver.stream_out().eof();
     bool prereq2 = _sender.stream_in().eof() && _FIN;
@@ -76,13 +78,15 @@ bool TCPConnection::active() const {
     if (!prereq1 || !prereq2 || !prereq3) {
         return true;
     }
-    if (_linger_after_streams_finish) return true;
+    if (_linger_after_streams_finish)
+        return true;
     return false;
 }
 
 size_t TCPConnection::write(const string &data) {
-    if (!active()) return 0;
-    
+    if (!active())
+        return 0;
+
     // write data to outbound bytestream in sender
     size_t writeBytes = _sender.stream_in().write(data);
     _sender.fill_window();
@@ -92,7 +96,8 @@ size_t TCPConnection::write(const string &data) {
 
 //! \param[in] ms_since_last_tick number of milliseconds since the last call to this method
 void TCPConnection::tick(const size_t ms_since_last_tick) {
-    if (!active()) return;
+    if (!active())
+        return;
 
     // 1. tell TCPSender about passage of time
     _timeSinceLastSegRecv += ms_since_last_tick;
@@ -120,7 +125,8 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
 }
 
 void TCPConnection::end_input_stream() {
-    if (!active()) return;
+    if (!active())
+        return;
 
     _sender.stream_in().end_input();
     _sender.fill_window();
@@ -159,8 +165,9 @@ void TCPConnection::sendSegment() {
     while (!waitingSegments.empty()) {
         TCPSegment seg = waitingSegments.front();
 
-        if (seg.header().fin) _FIN = true;
-        
+        if (seg.header().fin)
+            _FIN = true;
+
         // 2. before sending the segment, ask the TCPReceiver for ackno & window_size
         //    If there is ackno, it will set ACK flag and fields in TCPSegment
         // set ACK flag and fields in TCPSegment
@@ -174,7 +181,8 @@ void TCPConnection::sendSegment() {
         size_t maxWindowSize = static_cast<size_t>(numeric_limits<uint16_t>().max());
         seg.header().win = min(_receiver.window_size(), maxWindowSize);
         // set RST flag in TCPSegment if needed
-        if (_RST) seg.header().rst = true;
+        if (_RST)
+            seg.header().rst = true;
 
         // send the segment
         _segments_out.push(seg);
