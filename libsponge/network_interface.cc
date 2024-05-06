@@ -32,6 +32,7 @@ NetworkInterface::NetworkInterface(const EthernetAddress &ethernet_address, cons
 void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Address &next_hop) {
     // convert IP address of next hop to raw 32-bit representation (used in ARP header)
     const uint32_t nextHopIP = next_hop.ipv4_numeric();
+
     EthernetFrame frame;
     frame.header().type = EthernetHeader::TYPE_IPv4;
     frame.header().src = _ethernet_address;
@@ -40,7 +41,8 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
     // if destination Ethernet address is already known, send it right away
     // create an Ethernet frame and set payload to be serialized datagram
     // set source and destination addresses
-    if (_arpTable.count(nextHopIP) != 0 && _timer < _arpTable[nextHopIP].ttl + 30000) { // remember mapping only for 30 seconds
+    if (_arpTable.count(nextHopIP) != 0 &&
+        _timer < _arpTable[nextHopIP].ttl + 30000) {  // remember mapping only for 30 seconds
         frame.header().dst = _arpTable[nextHopIP].mac;
         _frames_out.push(frame);
     }
@@ -78,7 +80,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
     // ignore frames not destined for network interface
     // 1. if ethernet destination is broadcast address
     // 2. if ethernet destination is interface's own Ethernet address
-    if (frame.header().dst != _ethernet_address && frame.header().dst != ETHERNET_BROADCAST) {
+    if (frame.header().dst != ETHERNET_BROADCAST && frame.header().dst != _ethernet_address) {
         return {};
     }
 
@@ -123,6 +125,8 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
             replyFrame.payload().append(reply.serialize());
             _frames_out.push(replyFrame);
         }
+
+        // update associated waiting frames destination address and send them
         if (_waitingFrames.count(arp.sender_ip_address) != 0) {
             for (EthernetFrame &waitingFrame : _waitingFrames[arp.sender_ip_address]) {
                 waitingFrame.header().dst = frame.header().src;
@@ -131,7 +135,6 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
             _waitingFrames.erase(arp.sender_ip_address);
         }
     }
-
     return {};
 }
 
